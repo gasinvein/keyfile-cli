@@ -1,3 +1,5 @@
+#include <locale.h>
+
 #include <glib.h>
 
 static gchar *opt_group;
@@ -31,9 +33,12 @@ int main(int argc, char **argv) {
     GOptionContext *context;
     GKeyFile *keyfile;
     gchar *path;
+    int flags = G_KEY_FILE_NONE;
 
-    context = g_option_context_new ("KEYFILE - read ini-like keyfile");
-    g_option_context_add_main_entries (context, entries, NULL);
+    setlocale(LC_ALL, "");
+
+    context = g_option_context_new("KEYFILE - read ini-like keyfile");
+    g_option_context_add_main_entries(context, entries, NULL);
 
     if (!g_option_context_parse(context, &argc, &argv, &error)) {
         return usage(context, error->message);
@@ -45,7 +50,7 @@ int main(int argc, char **argv) {
     path = argv[1];
 
     keyfile = g_key_file_new();
-    if (!g_key_file_load_from_file(keyfile, path, G_KEY_FILE_NONE, &error)) {
+    if (!g_key_file_load_from_file(keyfile, path, flags, &error)) {
         g_printerr("%s\n", error->message);
         return 1;
     }
