@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push: {}
+  pull_request: {}
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install meson
+        run: sudo apt update && sudo apt install -y meson
+
+      - name: Configure
+        run: meson . build --prefix=${{ github.workspace }}/build-prefix
+
+      - name: Build
+        run: ninja -C build
+
+      - name: Run tests
+        run: ninja -C build test
+
+      - name: Install
+        run: ninja -C build install
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          path: build-prefix/
