@@ -8,15 +8,14 @@ jobs:
   build:
     name: Build and test
     runs-on: ubuntu-latest
+    container:
+      image: freedesktopsdk/flatpak:20.08-x86_64
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install meson
-        run: sudo apt update && sudo apt install -y meson
-
       - name: Configure
-        run: meson . build --prefix=${{ github.workspace }}/build-prefix
+        run: meson . build --prefix=$(pwd)/build-prefix
 
       - name: Build
         run: ninja -C build
