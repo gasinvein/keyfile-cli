@@ -5,10 +5,14 @@
 static gchar *opt_group;
 static gchar *opt_key;
 static gboolean opt_list_value;
+static gchar *opt_set_value;
+static gchar *opt_add_value;
 
 static GOptionEntry entries[] = {
     { "group", 'g', 0, G_OPTION_ARG_STRING, &opt_group, "Use this group", "GROUP" },
     { "key", 'k', 0, G_OPTION_ARG_STRING, &opt_key, "Use this key in specified GROUP", "KEY" },
+    { "set-value", 's', 0, G_OPTION_ARG_STRING, &opt_set_value, "Set the value for KEY in GROUP to VALUE", "VALUE" },
+    { "add-value", 'a', 0, G_OPTION_ARG_STRING, &opt_add_value, "Add item VALUE to the list for KEY in GROUP", "VALUE" },
     { "list", 'l', 0, G_OPTION_ARG_NONE, &opt_list_value, "Specified KEY contains a list", NULL },
     { NULL }
 };
@@ -77,6 +81,34 @@ int main(int argc, char **argv) {
 
     if (opt_group == NULL || opt_key == NULL) {
         return usage(context, "Both --group and --key must be specified");
+    }
+
+    // Set or add value
+    if (opt_set_value != NULL && opt_add_value != NULL)
+        return usage(context, "--set-value and --add-value are mutually exclusive");
+    if (opt_set_value != NULL || opt_add_value != NULL) {
+        if (opt_set_value != NULL)
+            g_key_file_set_string(keyfile, opt_group, opt_key, opt_set_value);
+        else if (opt_add_value != NULL)
+        {
+            gchar **values;
+            gsize n_values = 0;
+            values = g_key_file_get_string_list(keyfile, opt_group, opt_key, &n_values, &error);
+            if (values == NULL) {
+                g_printerr("%s\n", error->message);
+                return 1;
+            }
+            values[n_values++] = opt_add_value;
+            g_key_file_set_string_list(keyfile, opt_group, opt_key,
+                                       (const gchar * const *) values, n_values);
+        }
+        // Save modified keyfile
+        if (!g_key_file_save_to_file(keyfile, path, &error))
+        {
+            g_printerr("%s\n", error->message);
+            return 1;
+        }
+        return 0;
     }
 
     // Print each string in list value
