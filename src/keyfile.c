@@ -7,6 +7,7 @@ static gchar *opt_key;
 static gboolean opt_list_value;
 static gchar *opt_set_value;
 static gchar *opt_add_value;
+static gboolean opt_delete;
 
 static GOptionEntry entries[] = {
     { "group", 'g', 0, G_OPTION_ARG_STRING, &opt_group, "Use this group", "GROUP" },
@@ -14,6 +15,7 @@ static GOptionEntry entries[] = {
     { "set-value", 's', 0, G_OPTION_ARG_STRING, &opt_set_value, "Set the value for KEY in GROUP to VALUE", "VALUE" },
     { "add-value", 'a', 0, G_OPTION_ARG_STRING, &opt_add_value, "Add item VALUE to the list for KEY in GROUP", "VALUE" },
     { "list", 'l', 0, G_OPTION_ARG_NONE, &opt_list_value, "Specified KEY contains a list", NULL },
+    { "delete", 'd', 0, G_OPTION_ARG_NONE, &opt_delete, "Delete specified KEY or GROUP", NULL },
     { NULL }
 };
 
@@ -70,6 +72,8 @@ int main(int argc, char **argv) {
 
     if ((!opt_group || !opt_key) && (opt_add_value || opt_set_value))
         return usage(context, "Both --group and --key must be specified");
+    if (!opt_group && opt_delete)
+        return usage(context, "Either both --key and --group, or just --group, must be specified");
 
     // List groups if no options given
     if (!opt_group && !opt_key) {
@@ -80,7 +84,7 @@ int main(int argc, char **argv) {
     }
 
     // List keys in group if only --group specified
-    if (opt_group && !opt_key) {
+    if (opt_group && !opt_key && !opt_delete) {
         gchar **keys = NULL;
         gsize n_keys = 0;
         keys = g_key_file_get_keys(keyfile, opt_group, &n_keys, &error);
@@ -89,6 +93,25 @@ int main(int argc, char **argv) {
             return 1;
         }
         return print_string_list(keys, n_keys);
+    }
+
+    // Delete key or group
+    if (opt_delete) {
+        if (opt_group && opt_key) {
+            if (!g_key_file_remove_key(keyfile, opt_group, opt_key, &error)) {
+                g_printerr("%s\n", error->message);
+                return 1;
+            }
+            return save_keyfile(keyfile, path, error);
+        } else if (opt_group) {
+            if (!g_key_file_remove_group(keyfile, opt_group, &error)) {
+                g_printerr("%s\n", error->message);
+                return 1;
+            }
+            return save_keyfile(keyfile, path, error);
+        } else {
+            return usage(context, "Either both --key and --group, or just --group, must be specified");
+        }
     }
 
     // Set or add value
