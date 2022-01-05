@@ -32,6 +32,15 @@ int print_string_list(gchar **list, gsize length) {
     return 0;
 }
 
+int save_keyfile(GKeyFile *keyfile, gchar *path, GError *error) {
+    if (!g_key_file_save_to_file(keyfile, path, &error))
+        {
+            g_printerr("%s\n", error->message);
+            return 1;
+        }
+    return 0;
+}
+
 int main(int argc, char **argv) {
     GError *error = NULL;
     GOptionContext *context;
@@ -103,12 +112,7 @@ int main(int argc, char **argv) {
                                        (const gchar * const *) values, n_values);
         }
         // Save modified keyfile
-        if (!g_key_file_save_to_file(keyfile, path, &error))
-        {
-            g_printerr("%s\n", error->message);
-            return 1;
-        }
-        return 0;
+        return save_keyfile(keyfile, path, error);
     }
 
     // Print each string in list value
