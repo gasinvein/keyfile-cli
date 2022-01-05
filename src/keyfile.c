@@ -59,6 +59,9 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    if ((!opt_group || !opt_key) && (opt_add_value || opt_set_value))
+        return usage(context, "Both --group and --key must be specified");
+
     // List groups if no options given
     if (opt_group == NULL && opt_key == NULL) {
         gchar **groups;
@@ -77,10 +80,6 @@ int main(int argc, char **argv) {
             return 1;
         }
         return print_string_list(keys, n_keys);
-    }
-
-    if (opt_group == NULL || opt_key == NULL) {
-        return usage(context, "Both --group and --key must be specified");
     }
 
     // Set or add value
