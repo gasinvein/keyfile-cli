@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
         return usage(context, "Both --group and --key must be specified");
 
     // List groups if no options given
-    if (opt_group == NULL && opt_key == NULL) {
+    if (!opt_group && !opt_key) {
         gchar **groups;
         gsize n_groups = 0;
         groups = g_key_file_get_groups(keyfile, &n_groups);
@@ -71,11 +71,11 @@ int main(int argc, char **argv) {
     }
 
     // List keys in group if only --group specified
-    if (opt_group != NULL && opt_key == NULL) {
+    if (opt_group && !opt_key) {
         gchar **keys = NULL;
         gsize n_keys = 0;
         keys = g_key_file_get_keys(keyfile, opt_group, &n_keys, &error);
-        if (keys == NULL) {
+        if (!keys) {
             g_printerr("%s\n", error->message);
             return 1;
         }
@@ -83,17 +83,18 @@ int main(int argc, char **argv) {
     }
 
     // Set or add value
-    if (opt_set_value != NULL && opt_add_value != NULL)
+    if (opt_set_value && opt_add_value)
         return usage(context, "--set-value and --add-value are mutually exclusive");
-    if (opt_set_value != NULL || opt_add_value != NULL) {
-        if (opt_set_value != NULL)
+
+    if (opt_set_value || opt_add_value) {
+        if (opt_set_value)
             g_key_file_set_string(keyfile, opt_group, opt_key, opt_set_value);
-        else if (opt_add_value != NULL)
+        else if (opt_add_value)
         {
             gchar **values;
             gsize n_values = 0;
             values = g_key_file_get_string_list(keyfile, opt_group, opt_key, &n_values, &error);
-            if (values == NULL) {
+            if (!values) {
                 g_printerr("%s\n", error->message);
                 return 1;
             }
@@ -115,7 +116,7 @@ int main(int argc, char **argv) {
         gchar **list_value;
         gsize n_values = 0;
         list_value = g_key_file_get_string_list(keyfile, opt_group, opt_key, &n_values, &error);
-        if (list_value == NULL) {
+        if (!list_value) {
             g_printerr("%s\n", error->message);
             return 1;
         }
@@ -124,7 +125,7 @@ int main(int argc, char **argv) {
     } else  {
         gchar *str_value;
         str_value = g_key_file_get_string(keyfile, opt_group, opt_key, &error);
-        if (str_value == NULL) {
+        if (!str_value) {
             g_printerr("%s\n", error->message);
             return 1;
         }
